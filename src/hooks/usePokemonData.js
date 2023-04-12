@@ -1,34 +1,16 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
-import {BASE_URL} from "../constants";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchPokemonData } from "../store/reducers";
 
 export const usePokemonData = (perPage, currentPage) => {
-    const [pokeData, setPokeData] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [disable, setDisable] = useState(true);
-
-    const pokeFunc = async () => {
-        setLoading(true);
-
-        const res = await axios.get(`${BASE_URL}?limit=${perPage}&offset=${(currentPage - 1) * perPage}`);
-
-        setLoading(false);
-
-        if (res.data.previous != null) {
-            setDisable(false);
-        } else {
-            setDisable(true);
-        }
-
-        const pokemonRequests = res.data.results.map(item => axios.get(item.url));
-        const pokemonResponses = await Promise.all(pokemonRequests);
-        const pokemonData = pokemonResponses.map(response => response.data);
-        setPokeData(pokemonData);
-    }
+    const dispatch = useDispatch();
+    const { pokeData, loading, disable } = useSelector(
+        (state) => state.pokemonSlice
+    );
 
     useEffect(() => {
-        pokeFunc();
-    }, [BASE_URL, perPage, currentPage]);
+        dispatch(fetchPokemonData({ perPage, currentPage }));
+    }, [dispatch, perPage, currentPage]);
 
-    return [pokeData, loading, disable, setPokeData ,pokeFunc];
-}
+    return [pokeData, loading, disable];
+};
